@@ -3,7 +3,6 @@ class Tarjeta:
         self.numero = numero
         self.fecha_vencimiento = fecha_vencimiento
 
-  
 
 class TarjetaCredito(Tarjeta):
     def __init__(self, numero, fecha_vencimiento, limite_credito):

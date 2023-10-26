@@ -4,12 +4,12 @@ class Cuenta:
     self.saldo = 0
 
 
-class CApesos(Cuenta):
+class CajaAhorro(Cuenta):
+  def __init__(self, propietario):
+    super().__init__(propietario)
 
-class CADolares(Cuenta):
-
-class CCPesos(Cuenta):
-
-class CCDolares(Cuenta):
-
-class Cinversion(Cuenta):
+class CuentaCorriente(Cuenta):
+  def __init__(self, propietario, descubiertoMaximo):
+    super().__init__(propietario)
+    self.descubiertoMaximo = descubiertoMaximo
+    self.interesDescubierto = 0.01
