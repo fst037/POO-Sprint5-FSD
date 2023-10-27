@@ -48,7 +48,6 @@ def validar_informe(informe):
 
 
     for cliente in informe:
-
         # Desempaqueto datos utiles del cliente, para facilitar manejo
         cliente_tipo = cliente["tipo"]
 
@@ -149,7 +148,7 @@ def validar_informe(informe):
             transaccion["estado"] = "ACEPTADA" if valida else "RECHAZADA"
 
 # datos de ejemplo
-informe = {
+informe = [{
     "numero": 100001,
     "nombre": "Nicolas",
     "apellido": "Gaston",
@@ -173,14 +172,14 @@ informe = {
         },
         {
             "estado": "RECHAZADA",
-            "tipo": "COMPRA_EN_CUOTAS_TARJETA_VISA",
+            "tipo": "COMPRA_EN_CUOTAS_TARJETA_CREDITO_VISA",
             "permitidoActualParaTransaccion": 9000,
             "monto": 750000,
             "fecha": "10/10/2022 16: 14: 35",
             "numero": 2
         }
     ]
-}
+}]
 
 validar_informe(informe)
 
