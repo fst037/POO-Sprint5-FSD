@@ -4,12 +4,34 @@ class Cuenta:
     self.saldo = 0
 
 
-class CajaAhorro(Cuenta):
+class CCDolares(Cuenta):
+  def __init__(self, propietario):
+    super().__init__(propietario)
+    self.descubiertoMaximo = 100
+    self.interesDescubierto = 0.01
+    self.moneda = "USD"
+
+class CCPesos(Cuenta):
+  def __init__(self, propietario):
+    super().__init__(propietario)
+    self.descubiertoMaximo = 100000
+    self.interesDescubierto = 0.01
+    self.moneda = "ARS"
+
+class CADolares(Cuenta):
+  def __init__(self, propietario):
+    super().__init__(propietario)
+    self.moneda = "USD"
+
+class CAPesos(Cuenta):
+  def __init__(self, propietario):
+    super().__init__(propietario)
+    self.moneda = "ARS"
+
+class CuentaInversion(Cuenta):
   def __init__(self, propietario):
     super().__init__(propietario)
 
-class CuentaCorriente(Cuenta):
-  def __init__(self, propietario, descubiertoMaximo):
-    super().__init__(propietario)
-    self.descubiertoMaximo = descubiertoMaximo
-    self.interesDescubierto = 0.01
+class Chequera:
+  def __init__(self):
+    self.cheques = []

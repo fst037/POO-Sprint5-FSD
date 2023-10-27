@@ -1,6 +1,6 @@
 import random
-from cuentas import CADolares, CApesos
-from tarjetas import TarjetaDebito
+from cuentas import CCDolares, CCPesos, CADolares, CAPesos, CuentaInversion, Chequera
+from tarjetas import TarjetaCredito, TarjetaDebito
 from datetime import date
 
 class Cliente:
@@ -10,9 +10,14 @@ class Cliente:
     self.apellido = apellido
     self.dni = dni
     self.numero = random.randint(100000, 999999) #CLARAMENTE NO ESTA BIEN HACERLO ASI, ES SOLO DE PRUEBA
+    self.comisiones = (0, 0)
+    self.maximos = {}
     self.tarjetas = []
     self.cuentas = []
     self.chequeras = []
+    self.cantRetirosDia = 0
+    self.dineroRetirosDia = 0
+    self.ultimoRetiro = date.today()
 
   def actualizarDia(self):
     if self.ultimoRetiro != date.today():
@@ -20,56 +25,75 @@ class Cliente:
       self.dineroRetirosDia = 0
       self.ultimoRetiro = date.today()
 
-
-    # ACLARACION: TOMAR CON PINZAS, ESTO ESTABA EN EL CLASSIC, 
-    # PERO ME DI CUENTA QUE SE PUEDE HACER POR HERENCIA USANDO LOS MAXIMOS
-
-    # FALTAN ADAPTAR LOS METODOS PARA QUE FUNCIONEN POLIMORFICAMENTE CON TODAS LAS CLASES HIJAS
-
-  '''
-
-    ACLARACION: TOMAR CON PINZAS, ESTO ESTABA EN EL CLASSIC, 
-    PERO ME DI CUENTA QUE SE PUEDE HACER POR HERENCIA USANDO LOS MAXIMOS
-
-    FALTAN ADAPTAR LOS METODOS PARA QUE FUNCIONEN POLIMORFICAMENTE CON TODAS LAS CLASES HIJAS
-
-    def agregarTarjetaDebito(self, empresa):
-    assert len(self.tarjetas) == 0, "El cliente alcanzo la cantida maxima de tarjetas"
-    self.tarjetas.append(TarjetaDebito(empresa))
-
-  def agregarCajaAhorroPesos(self):
-    for cuenta in self.cuentas:
-      if type(cuenta) == CApesos:
-        assert False, "El cliente ya tiene una cuenta de ahorro en pesos"
-    self.cuentas.append(CApesos(self))
-  
-  def agregarCajaAhorroDolares(self):
-    for cuenta in self.cuentas:
-      if type(cuenta) == CADolares:
-        assert False, "El cliente ya tiene una cuenta de ahorro en dolares"
-    self.cuentas.append(CApesos(self))
-  
-  def retirarDinero(self, monto, cuenta):
-
+  def retiroEfectivo(self, monto, moneda):
     self.actualizarDia()
+    if self.dineroRetirosDia < self.maximos["retirosDineroDia"]:
+      if self.maximos["retirosDiaGratis"] == None or self.cantRetirosDia > self.maximos["retirosDiaGratis"]:
+        monto += monto * self.comisiones[0]
+        self.cantRetirosDia += 1
+        self.dineroRetirosDia += monto
+      else:
+        self.cantRetirosDia += 1
+        self.dineroRetirosDia += monto
 
-    assert self.dineroRetirosDia + monto < 10000, "El cliente alcanzo el monto maximo de retiros por dia"
+      if moneda == "ARS" or moneda == "USD":
+        tipoCuenta = CAPesos if moneda == "ARS" else CADolares
+        for cuenta in self.cuentas:
+          if type(cuenta) == tipoCuenta and cuenta.saldo >= monto:
+            cuenta.saldo -= monto
+            return
+      assert False, "El cliente no tiene una cuenta con esa moneda o no tiene saldo suficiente"
+    assert False, "El cliente alcanzo el monto maximo de retiros por dia"
 
-    if self.cantRetirosDia > 5:
-      monto += monto * self.comisiones[0]
-      self.cantRetirosDia += 1
-      self.dineroRetirosDia += monto
+  def compraCredito(self, monto, empresaTarjeta, unPagoUnico):
+    maximoCorrespondiente= "pagoUnicoCredito" if unPagoUnico else "pagoCuotasCredito"
+    if (monto <= self.maximos[maximoCorrespondiente]):      
+      for tarjeta in self.tarjetas:
+        if type(tarjeta) == TarjetaCredito and tarjeta.empresa == empresaTarjeta:
+          if tarjeta.limite_credito >= monto + tarjeta.creditoActual:
+            tarjeta.creditoActual += monto
+            return
+          return
+      assert False, "El cliente no tiene una tarjeta de credito con esa empresa con limite suficiente, pruebe pagar la deuda o sacar una nueva tarjeta con esa empresa"
+    assert False, "El pago fue rechazado por llegar al limite de pago unico con tarjeta de credito"
+
+  def agregar_tarjeta_debito(self):
+    if len(filter(lambda x: type(x) == TarjetaDebito, self.tarjetas)) < self.maximos["tarjetasDebito"]:
+      self.tarjetas.append(TarjetaDebito(0))
     else:
-      self.cantRetirosDia += 1
-      self.dineroRetirosDia += monto
+      assert False, "El cliente alcanzo la cantidad maxima de tarjetas de debito"
 
-    for cuenta in self.cuentas:
-      if cuenta == cuenta:
-        cuenta.saldo -= monto
-        return
-      
-    assert False, "El cliente no tiene esa cuenta"
-  '''
+  def agregar_tarjeta_credito(self, empresa):
+      tarjeta_credito = TarjetaCredito(1000000, empresa)
+      if empresa in ['Visa','Master','Amex']:
+        if len(filter(lambda x: type(x) == TarjetaCredito and x.empresa == empresa, self.tarjetas)) < self.maximos["tarjetasCredito" + empresa]:
+          self.tarjetas.append(tarjeta_credito)
+        else:
+          assert False, "El cliente alcanzo la cantidad maxima de tarjetas de credito de " + empresa
+  
+  def agregar_cuenta(self, tipoCuenta):
+    if tipoCuenta in ['CAPesos', 'CADolares', 'CCPesos', 'CCDolares', 'CuentaInversion' ]:
+      correspondenciaTipoCuentaMaximoYConstructor = {
+        'CAPesos': ('cajasAhorroPesos', CAPesos),
+        'CADolares': ('cajasAhorroDolares', CADolares),
+        'CCPesos': ('cuentasCorrientePesos', CCPesos),
+        'CCDolares': ('cuentasCorrienteDolares', CCDolares),
+        'CuentaInversion': ('cuentasInversion', CuentaInversion)
+      }
+      maximoCorrespondiente = correspondenciaTipoCuentaMaximoYConstructor[tipoCuenta][0]
+      constructorCorrespondiente = correspondenciaTipoCuentaMaximoYConstructor[tipoCuenta][1]
+      if len(filter(lambda x: type(x) == tipoCuenta, self.cuentas)) < self.maximos[maximoCorrespondiente]:
+        self.cuentas.append(constructorCorrespondiente(self))
+      else:
+        assert False, f"El cliente alcanzo la cantidad maxima de cuentas tipo {tipoCuenta}"
+    else:
+      assert False, "El tipo de cuenta no es valido" 
+
+  def agregar_chequera(self):
+    if len(self.chequeras) < self.maximos["chequeras"]:
+      self.chequeras.append(Chequera())
+    else:
+      assert False, "El cliente alcanzo la cantidad maxima de chequeras"
 
 class ClienteClassic(Cliente):
 
@@ -98,7 +122,6 @@ class ClienteGold(Cliente):
   def __init__(self, nombre, apellido, dni):
     super().__init__(nombre, apellido, dni)
     self.comisionesTransferencias = (0.005, 0.001)
-    self.empresasTarjetas = ["Visa", "Mastercard"]
     self.maximos = {
       "retirosDiaGratis": None,
       "retirosDineroDia": 20000,
@@ -121,7 +144,6 @@ class ClienteBlack(Cliente):
   def __init__(self, nombre, apellido, dni):
     super().__init__(nombre, apellido, dni)
     self.comisionesTransferencias = (0, 0)
-    self.empresasTarjetas = ["Visa", "Mastercard", "American Express"]
     self.maximos = {
       "retirosDiaGratis": None,
       "retirosDineroDia": 100000,
