@@ -1,6 +1,6 @@
 import random
-from cuentas import CADolares, CApesos
-from tarjetas import TarjetaDebito
+from cuentas import CuentaCorriente, CADolares, CAPesos, CuentaInversion
+from tarjetas import TarjetaCredito, TarjetaDebito
 from datetime import date
 
 class Cliente:
@@ -20,7 +20,19 @@ class Cliente:
       self.dineroRetirosDia = 0
       self.ultimoRetiro = date.today()
 
+  def agregar_tarjeta_debito(self, numero, fecha_vencimiento, saldo_disponible):
+      tarjeta_debito = TarjetaDebito(numero, fecha_vencimiento, saldo_disponible)
+      self.tarjetas_debito.append(tarjeta_debito)
 
+  def agregar_tarjeta_credito(self, numero, fecha_vencimiento, limite_credito):
+      tarjeta_credito = TarjetaCredito(numero, fecha_vencimiento, limite_credito)
+      self.tarjetas_credito.append(tarjeta_credito)
+
+  def agregar_cuenta(self, cuenta):
+      if isinstance(cuenta, (CADolares, CAPesos, CuentaCorriente, CuentaInversion)):
+        self.cuentas.append(cuenta)
+      else:
+          raise ValueError("Tipo de cuenta no válido.")
     # ACLARACION: TOMAR CON PINZAS, ESTO ESTABA EN EL CLASSIC, 
     # PERO ME DI CUENTA QUE SE PUEDE HACER POR HERENCIA USANDO LOS MAXIMOS
 
